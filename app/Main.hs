@@ -5,6 +5,7 @@ import Data.List
 import System.Directory
 import System.FilePath
 import System.Process
+import System.Environment
 import Control.Conditional
 
 import Options.Applicative
@@ -12,7 +13,7 @@ import Options.Applicative
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
 main =
-  customExecParser parserPrefs opts >>= prepareCmd >>= callProcess "csi"
+  opts >>= customExecParser parserPrefs >>= prepareCmd >>= callProcess "csi"
   where
     prepareCmd (Flags dirs args) = do
       dlls <- filter ((".dll" ==) . takeExtension) . join <$> mapM listFilesRecursively dirs
@@ -32,10 +33,13 @@ flags = Flags
     <> help "Import all assemblies from the specified folder"))
   <*> many (strArgument (metavar "ARGUMENTS..."))
 
-opts = info (helper <*> flags)
-  ( fullDesc
-  <> progDesc "All arguments specified after `--` will be passed to `csi`. E.g.: `csi-init -- /u:Newtonsoft.Json`"
-  <> header "Invokes the `csi` C# REPL preloaded with a bunch of assemblies.")
+opts :: IO (ParserInfo Flags)
+opts = do
+  progName <- getProgName
+  return $ info (helper <*> flags)
+      ( fullDesc
+      <> progDesc ("All arguments specified after `--` will be passed to `csi`. E.g.: `" ++ progName ++ " -- /u:Newtonsoft.Json`")
+      <> header "Invokes the `csi` C# REPL preloaded with a bunch of assemblies.")
 
 parserPrefs = prefs showHelpOnError
 
