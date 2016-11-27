@@ -13,16 +13,23 @@ import Options.Applicative
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
 main =
-  opts >>= customExecParser parserPrefs >>= prepareCmd >>= callProcess "csi"
-  where
-    prepareCmd (Flags dirs args) = do
-      dlls <- filter ((".dll" ==) . takeExtension) . join <$> mapM listFilesRecursively dirs
-      return $ ("/r:"++) <$> dlls <|> args
+  mkOpts >>= customExecParser parserPrefs >>= prepareArgs >>= callProcess "csi"
+
+prepareArgs :: Flags -> IO [String]
+prepareArgs (Flags dirs args) = do
+  dlls <- join <$> mapM findDlls dirs
+  let importDirs = ("/lib:" ++) <$> dirs
+  let importDlls = if null dlls then ""
+                    else "/r:" ++ join (intersperse "," dlls)
+  return $ importDlls : importDirs ++ args
+
+findDlls :: FilePath -> IO [FilePath]
+findDlls dir = filter ((".dll" ==) . takeExtension) . map (makeRelative dir) <$> listFilesRecursively dir
 
 data Flags = Flags {
   asmDirs :: [String],
   args    :: [String]
-} deriving (Show)
+}
 
 flags :: Parser Flags
 flags = Flags
@@ -33,8 +40,8 @@ flags = Flags
     <> help "Import all assemblies from the specified folder"))
   <*> many (strArgument (metavar "ARGUMENTS..."))
 
-opts :: IO (ParserInfo Flags)
-opts = do
+mkOpts :: IO (ParserInfo Flags)
+mkOpts = do
   progName <- getProgName
   return $ info (helper <*> flags)
       ( fullDesc
@@ -43,13 +50,13 @@ opts = do
 
 parserPrefs = prefs showHelpOnError
 
+
 listFilesRecursively :: FilePath -> IO [String]
-listFilesRecursively dir =
+listFilesRecursively dir = do
   let go path = ifM (isFile path) (return [path]) (listFilesRecursively path)
-  in do
-    paths <- listDirectoryAbs dir
-    all <- mapM go paths
-    return (join all)
+  paths <- listDirectoryAbs dir
+  all   <- mapM go paths
+  return (join all)
 
 -- returns absolute filepaths for all files and directories inside a directory
 -- adapted from: http://stackoverflow.com/a/8572250/857807
