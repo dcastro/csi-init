@@ -6,29 +6,36 @@ import System.Directory
 import System.FilePath
 import System.Process
 import System.Environment
-import Control.Conditional
+import Control.Conditional hiding (when)
 
 import Options.Applicative
 
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
-main =
-  mkOpts >>= customExecParser parserPrefs >>= prepareArgs >>= callProcess "csi"
+main = do
+  fs <- mkOpts >>= customExecParser parserPrefs
+  args <- prepareArgs fs
+  printArgs fs args
+  callProcess "csi" args
 
 prepareArgs :: Flags -> IO [String]
-prepareArgs (Flags dirs args) = do
+prepareArgs (Flags dirs args _) = do
   dlls <- join <$> mapM findDlls dirs
   let importDirs = ("/lib:" ++) <$> dirs
   let importDlls = if null dlls then ""
                     else "/r:" ++ join (intersperse "," dlls)
   return $ importDlls : importDirs ++ args
 
+printArgs :: Flags -> [String] -> IO ()
+printArgs fs args = when (debug fs) (mapM_ putStrLn args)
+
 findDlls :: FilePath -> IO [FilePath]
 findDlls dir = filter ((".dll" ==) . takeExtension) . map (makeRelative dir) <$> listFilesRecursively dir
 
 data Flags = Flags {
   asmDirs :: [String],
-  args    :: [String]
+  args    :: [String],
+  debug   :: Bool
 }
 
 flags :: Parser Flags
@@ -39,6 +46,9 @@ flags = Flags
     <> metavar "ASSEMBLYDIR"
     <> help "Import all assemblies from the specified folder"))
   <*> many (strArgument (metavar "ARGUMENTS..."))
+  <*> switch
+    ( long "debug"
+    <> help "Print the arguments being passed to `csi`")
 
 mkOpts :: IO (ParserInfo Flags)
 mkOpts = do
