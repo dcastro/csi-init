@@ -46,7 +46,7 @@ $ csi-init
 
 `csi-init`'s options:
 ```
-$ csi -h
+$ csi-init -h
 Invokes the `csi` C# REPL preloaded with a bunch of assemblies.
 
 Usage: csi-init [-r|--rdir ASSEMBLYDIR] [-d|--dir ASSEMBLYDIR] [ARGUMENTS...]
@@ -62,7 +62,7 @@ Available options:
   --debug                  Print the arguments being passed to `csi`
 ```
 
-`csi`'s options (at the moment of writing):
+`csi`'s options (at the time of writing):
 ```
 $ csi -help
 Microsoft (R) Visual C# Interactive Compiler version 1.3.1.60616

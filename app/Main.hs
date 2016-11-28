@@ -24,7 +24,7 @@ prepareArgs (Flags dirs rdirs args _) = do
   let importDirs = ("/lib:" ++) <$> (dirs ++ rdirs)
   let importDlls = if null dlls then []
                     else ["/r:" ++ join (intersperse "," dlls)]
-  return $ importDlls ++ importDirs ++ args
+  return $ importDirs ++ importDlls ++ args
 
 printArgs :: Flags -> [String] -> IO ()
 printArgs fs args = when (debug fs) (putStrLn ("Arg count: " ++ show (length args)) >> mapM_ putStrLn args)
