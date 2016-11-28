@@ -47,15 +47,15 @@ data Flags = Flags {
 flags :: Parser Flags
 flags = Flags
   <$> many ( strOption
-    ( long "rdir"
-    <> short 'r'
-    <> metavar "ASSEMBLYDIR"
-    <> help "Import all assemblies from the specified folder and it's subfolders (recursive search)"))
-  <*> many ( strOption
     ( long "dir"
     <> short 'd'
     <> metavar "ASSEMBLYDIR"
     <> help "Import all assemblies from the specified folder"))
+  <*> many ( strOption
+    ( long "rdir"
+    <> short 'r'
+    <> metavar "ASSEMBLYDIR"
+    <> help "Import all assemblies from the specified folder and it's subfolders (recursive search)"))
   <*> many (strArgument (metavar "ARGUMENTS..."))
   <*> switch
     ( long "debug"
