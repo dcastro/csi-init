@@ -19,8 +19,8 @@ main = do
   callProcess "csi" args
 
 prepareArgs :: Flags -> IO [String]
-prepareArgs (Flags dirs args _) = do
-  dlls <- join <$> mapM findDlls dirs
+prepareArgs (Flags dirs rdirs args _) = do
+  dlls <- liftM2 (++) (join <$> mapM findDlls dirs) (join <$> mapM findDllsRecRecursively rdirs)
   let importDirs = ("/lib:" ++) <$> dirs
   let importDlls = if null dlls then ""
                     else "/r:" ++ join (intersperse "," dlls)
@@ -30,17 +30,28 @@ printArgs :: Flags -> [String] -> IO ()
 printArgs fs args = when (debug fs) (mapM_ putStrLn args)
 
 findDlls :: FilePath -> IO [FilePath]
-findDlls dir = filter ((".dll" ==) . takeExtension) . map (makeRelative dir) <$> listFilesRecursively dir
+findDlls dir = filterDlls <$> (listDirectory dir >>= filterM isFile)
+
+findDllsRecRecursively :: FilePath -> IO [FilePath]
+findDllsRecRecursively dir = filterDlls . map (makeRelative dir) <$> listFilesRecursively dir
+
+filterDlls = filter ((".dll" ==) . takeExtension)
 
 data Flags = Flags {
-  asmDirs :: [String],
-  args    :: [String],
-  debug   :: Bool
+  asmDirs   :: [String],
+  asmRDirs  :: [String],
+  args      :: [String],
+  debug     :: Bool
 }
 
 flags :: Parser Flags
 flags = Flags
   <$> many ( strOption
+    ( long "rdir"
+    <> short 'r'
+    <> metavar "ASSEMBLYDIR"
+    <> help "Import all assemblies from the specified folder and it's subfolders (recursive search)"))
+  <*> many ( strOption
     ( long "dir"
     <> short 'd'
     <> metavar "ASSEMBLYDIR"
@@ -60,8 +71,8 @@ mkOpts = do
 
 parserPrefs = prefs showHelpOnError
 
-
-listFilesRecursively :: FilePath -> IO [String]
+-- returns absolute filepaths for all files inside a directory and its subdirectories
+listFilesRecursively :: FilePath -> IO [FilePath]
 listFilesRecursively dir = do
   let go path = ifM (isFile path) (return [path]) (listFilesRecursively path)
   paths <- listDirectoryAbs dir
