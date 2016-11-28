@@ -21,7 +21,7 @@ main = do
 prepareArgs :: Flags -> IO [String]
 prepareArgs (Flags dirs rdirs args _) = do
   dlls <- join <$> liftM2 (++) (mapM findDlls dirs) (mapM findDllsRecRecursively rdirs)
-  let importDirs = ("/lib:" ++) <$> dirs
+  let importDirs = ("/lib:" ++) <$> (dirs ++ rdirs)
   let importDlls = if null dlls then []
                     else ["/r:" ++ join (intersperse "," dlls)]
   return $ importDlls ++ importDirs ++ args
