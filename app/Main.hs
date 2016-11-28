@@ -22,12 +22,12 @@ prepareArgs :: Flags -> IO [String]
 prepareArgs (Flags dirs rdirs args _) = do
   dlls <- liftM2 (++) (join <$> mapM findDlls dirs) (join <$> mapM findDllsRecRecursively rdirs)
   let importDirs = ("/lib:" ++) <$> dirs
-  let importDlls = if null dlls then ""
-                    else "/r:" ++ join (intersperse "," dlls)
-  return $ importDlls : importDirs ++ args
+  let importDlls = if null dlls then []
+                    else ["/r:" ++ join (intersperse "," dlls)]
+  return $ importDlls ++ importDirs ++ args
 
 printArgs :: Flags -> [String] -> IO ()
-printArgs fs args = when (debug fs) (mapM_ putStrLn args)
+printArgs fs args = when (debug fs) (putStrLn ("Arg count: " ++ show (length args)) >> mapM_ putStrLn args)
 
 findDlls :: FilePath -> IO [FilePath]
 findDlls dir = filterDlls <$> (listDirectory dir >>= filterM isFile)
