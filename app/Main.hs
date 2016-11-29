@@ -20,7 +20,7 @@ main = do
 
 prepareArgs :: Flags -> IO [String]
 prepareArgs (Flags dirs rdirs args _) = do
-  dlls <- join <$> liftM2 (++) (mapM findDlls dirs) (mapM findDllsRecRecursively rdirs)
+  dlls <- join <$> liftM2 (++) (mapM findDlls dirs) (mapM findDllsRecursively rdirs)
   let importDirs = ("/lib:" ++) <$> (dirs ++ rdirs)
   let importDlls = if null dlls then []
                     else ["/r:" ++ join (intersperse "," dlls)]
@@ -32,8 +32,8 @@ printArgs fs args = when (debug fs) (putStrLn ("Arg count: " ++ show (length arg
 findDlls :: FilePath -> IO [FilePath]
 findDlls dir = filterDlls <$> (listDirectory dir >>= filterM isFile)
 
-findDllsRecRecursively :: FilePath -> IO [FilePath]
-findDllsRecRecursively dir = filterDlls . map (makeRelative dir) <$> listFilesRecursively dir
+findDllsRecursively :: FilePath -> IO [FilePath]
+findDllsRecursively dir = filterDlls . map (makeRelative dir) <$> listFilesRecursively dir
 
 filterDlls = filter ((".dll" ==) . takeExtension)
 
