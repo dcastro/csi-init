@@ -66,7 +66,7 @@ mkOpts = do
   progName <- getProgName
   return $ info (helper <*> flags)
       ( fullDesc
-      <> progDesc ("All arguments specified after `--` will be passed to `csi`. E.g.: `" ++ progName ++ " -- /u:Newtonsoft.Json`")
+      <> progDesc ("All arguments specified after `--` will be passed directly to `csi`. E.g.: `" ++ progName ++ " -- /u:Newtonsoft.Json`")
       <> header "Invokes the `csi` C# REPL preloaded with a bunch of assemblies.")
 
 parserPrefs = prefs showHelpOnError

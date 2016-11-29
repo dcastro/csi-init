@@ -3,13 +3,19 @@
 
 ## Usage
 
+**Note:** make sure you have `csi` in your path. It comes bundled with Visual Studio 2015 and is typically located in `C:\Program Files (x86)\MSBuild\14.0\Bin\`.
+
 You can use `-d` to load the REPL with all the assemblies found in a given directory, or `-r` to search for assemblies recursively.
 
-E.g. `csi-init -d c:\MyProject\bin`
+```
+csi-init -d c:\MyProject\bin
+```
 
 All arguments specified after `--` will be passed directly to `csi`.
 
-E.g. `csi-init -d c:\MyProject\bin -- /u:MyProject.SomeNamespace`
+```
+csi-init -d c:\MyProject\bin -- /u:MyProject.SomeNamespace
+```
 
 A common use case is to download all your commonly used NuGet packages into a folder (using [nuget's command line tool][3]), and then load all these assemblies into a REPL:
 
