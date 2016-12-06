@@ -1,6 +1,10 @@
 #csi-init
 `csi-init` is a command line tool that allows you to launch [Roslyn's C# REPL (`csi`)][0] preloaded with all the assemblies found in one or more directories.
 
+> \<cockney accent\>Wots my favourite crime show? ..... csi init!\</cockney accent\>
+>
+> \- Jeff McCrory
+
 ## Usage
 
 **Note:** make sure you have `csi` in your path. It comes bundled with Visual Studio 2015 and is typically located in `C:\Program Files (x86)\MSBuild\14.0\Bin\`.
