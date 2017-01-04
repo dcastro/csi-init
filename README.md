@@ -48,7 +48,7 @@ $ stack exec csi-init
 Or:
 
 ```
-$ stack build && stack install
+$ stack install
 $ csi-init
 ```
 
