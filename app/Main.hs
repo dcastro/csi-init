@@ -30,7 +30,7 @@ printArgs :: Flags -> [String] -> IO ()
 printArgs fs args = when (debug fs) (putStrLn ("Arg count: " ++ show (length args)) >> mapM_ putStrLn args)
 
 findDlls :: FilePath -> IO [FilePath]
-findDlls dir = filterDlls <$> (listDirectory dir >>= filterM isFile)
+findDlls dir = filterDlls . map (makeRelative dir) <$> (filterM isFile =<< listDirectoryAbs dir)
 
 findDllsRecursively :: FilePath -> IO [FilePath]
 findDllsRecursively dir = filterDlls . map (makeRelative dir) <$> listFilesRecursively dir
