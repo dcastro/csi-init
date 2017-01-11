@@ -12,6 +12,9 @@ import Control.Conditional hiding (when)
 import Options.Applicative
 import Control.Newtype
 
+{-# ANN findDlls            "HLint: ignore Use fmap" #-}
+{-# ANN findDllsRecursively "HLint: ignore Use fmap" #-}
+
 newtype Directory = Directory String
 newtype Argument  = Argument  String
 
@@ -43,10 +46,17 @@ printArgs :: Flags -> [Argument] -> IO ()
 printArgs fs args = when (debug fs) (putStrLn ("Arg count: " ++ show (length args)) >> mapM_ (putStrLn . unpack) args)
 
 findDlls :: Directory -> IO [FilePath]
-findDlls dir = filterDlls . map (makeRelative $ unpack dir) <$> (filterM isFile =<< listDirectoryAbs dir)
+findDlls dir =
+  listDirectoryAbs dir
+  >>= filterM isFile
+  >>= return . filterDlls
+  >>= return . map (makeRelative $ unpack dir)
 
 findDllsRecursively :: Directory -> IO [FilePath]
-findDllsRecursively dir = filterDlls . map (makeRelative $ unpack dir) <$> listFilesRecursively dir
+findDllsRecursively dir =
+  listFilesRecursively dir
+  >>= return . filterDlls
+  >>= return . map (makeRelative $ unpack dir)
 
 filterDlls = filter ((".dll" ==) . takeExtension)
 
