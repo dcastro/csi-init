@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances, DeriveGeneric #-}
 
 module Main where
 
@@ -9,17 +9,13 @@ import System.Environment
 import Options.Applicative
 import Control.Newtype
 import System.FilePath.Find hiding (Directory)
+import GHC.Generics
 
-newtype Directory = Directory String deriving Show
-newtype Argument  = Argument  String deriving Show
+newtype Directory = Directory String deriving Generic
+newtype Argument  = Argument  String deriving Generic
 
-instance Newtype Directory String where
-  pack = Directory
-  unpack (Directory s) = s
-
-instance Newtype Argument String where
-    pack = Argument
-    unpack (Argument s) = s
+instance Newtype Directory
+instance Newtype Argument
 
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
