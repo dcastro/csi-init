@@ -8,6 +8,7 @@ import System.Process
 import System.Environment
 import Options.Applicative
 import Control.Newtype
+import System.FilePath
 import System.FilePath.Find hiding (Directory)
 import GHC.Generics
 
@@ -28,11 +29,11 @@ main = do
 
 findFiles :: [Directory] -> [Directory] -> FilterPredicate -> IO [FilePath]
 findFiles dirs rdirs pred =
-  join <$> sequence (
-    (dirs  <&> (find (depth <? 1) pred . unpack)) ++
-    (rdirs <&> (find always       pred . unpack))
+  join <$> sequence ( do
+    (dir, recursion) <- (dirs `zip` repeat (depth <? 1)) ++ (rdirs `zip` repeat always)
+    return $ find recursion pred (unpack dir) <&> map (makeRelative' dir)
   )
-
+  
 isDll :: FilterPredicate
 isDll = extension ==? ".dll" &&? fileType ==? RegularFile
 
@@ -84,3 +85,6 @@ parserPrefs = prefs showHelpOnError
 infixl 1 <&>
 (<&>) :: Functor f => f a -> (a -> b) -> f b
 (<&>) = flip (<$>)
+
+makeRelative' :: Directory -> FilePath -> FilePath
+makeRelative' dir = makeRelative $ unpack dir
