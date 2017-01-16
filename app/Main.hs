@@ -10,6 +10,7 @@ import Options.Applicative
 import Control.Newtype
 import System.FilePath
 import System.FilePath.Find hiding (Directory)
+import System.FilePath.GlobPattern
 import GHC.Generics
 
 newtype Directory = Directory String deriving Generic
@@ -21,9 +22,10 @@ instance Newtype Argument
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
 main = do
-  (Flags dirs rdirs args debug) <- mkOpts >>= customExecParser parserPrefs
-  dlls <- findFiles dirs rdirs isDll
-  let args' = prepareArgs (dirs ++ rdirs) dlls args
+  (Flags dirs rdirs patterns args debug) <- mkOpts >>= customExecParser parserPrefs
+  let findFilter  = isDll &&? excludePaths patterns
+  dlls            <- findFiles dirs rdirs findFilter
+  let args'       = prepareArgs (dirs ++ rdirs) dlls args
   when debug (printArgs args')
   callProcess "csi" (unpack <$> args')
 
@@ -39,6 +41,10 @@ findFiles dirs rdirs pred =
 isDll :: FilterPredicate
 isDll = extension ==? ".dll" &&? fileType ==? RegularFile
 
+excludePaths :: [GlobPattern] -> FilterPredicate
+excludePaths patterns = ala AllClause foldMap $ (normalisedFilePath /~?) <$> patterns
+  where normalisedFilePath = normalise <$> filePath
+
 prepareArgs :: [Directory] -> [FilePath] -> [Argument] -> [Argument]
 prepareArgs dirs dlls args =
   let importDirs = over Directory ("/lib:" ++) <$> dirs
@@ -52,6 +58,7 @@ printArgs args = putStrLn ("Arg count: " ++ show (length args)) >> mapM_ (putStr
 data Flags = Flags {
   asmDirs   :: [Directory],
   asmRDirs  :: [Directory],
+  exclude   :: [GlobPattern],
   args      :: [Argument],
   debug     :: Bool
 }
@@ -68,6 +75,11 @@ flags = Flags
     <> short 'r'
     <> metavar "ASSEMBLYDIR"
     <> help "Import all assemblies from the specified folder and it's subfolders (recursive search)"))
+  <*> many (strOption
+    ( long "exclude"
+    <> short 'e'
+    <> metavar "PATTERN"
+    <> help "Exclude assemblies whose path match a pattern (e.g. **filename.dll, **\\\\file*.dll, **\\\\x86\\\\**)"))
   <*> many (pack <$> strArgument (metavar "ARGUMENTS..."))
   <*> switch
     ( long "debug"
@@ -90,3 +102,21 @@ infixl 1 <&>
 
 makeRelative' :: Directory -> FilePath -> FilePath
 makeRelative' dir = makeRelative $ unpack dir
+
+-- Monoid instances for FindClause Bool
+newtype AllClause = AllClause { getAllClause :: FindClause Bool } deriving Generic
+newtype AnyClause = AnyClause { getAnyClause :: FindClause Bool } deriving Generic
+
+instance Newtype AllClause
+instance Newtype AnyClause
+
+instance Monoid AllClause where
+  mempty = AllClause always
+  AllClause x `mappend` AllClause y = AllClause (x &&? y)
+
+instance Monoid AnyClause where
+  mempty = AnyClause never
+  AnyClause x `mappend` AnyClause y = AnyClause (x ||? y)
+
+never :: FindClause Bool
+never = return False
