@@ -42,8 +42,8 @@ isDll :: FilterPredicate
 isDll = extension ==? ".dll" &&? fileType ==? RegularFile
 
 excludePaths :: [GlobPattern] -> FilterPredicate
-excludePaths patterns = ala AllClause foldMap $ (normalisedFilePath /~?) <$> patterns
-  where normalisedFilePath = normalise <$> filePath
+excludePaths patterns = ala AllClause foldMap $ (path /~?) <$> patterns
+  where path = normalise <$> canonicalPath
 
 prepareArgs :: [Directory] -> [FilePath] -> [Argument] -> [Argument]
 prepareArgs dirs dlls args =
@@ -79,7 +79,11 @@ flags = Flags
     ( long "exclude"
     <> short 'e'
     <> metavar "PATTERN"
-    <> help "Exclude assemblies whose path match a pattern (e.g. **filename.dll, **\\\\file*.dll, **\\\\x86\\\\**)"))
+    <> help "Exclude assemblies whose path match a pattern (e.g. **filename.dll, C:\\\\tmp\\\\file*.dll, **\\\\x86\\\\**)\
+      \ NB: patterns are matched against an assembly's absolute, canonical path. I.e., on Windows, backslashes are used and the drive letter is uppercase.\
+      \ Backslashes must be escaped with \"\\\\\".\
+      \ For more information on patterns, see https://goo.gl/3TqYeF"
+    ))
   <*> many (pack <$> strArgument (metavar "ARGUMENTS..."))
   <*> switch
     ( long "debug"
