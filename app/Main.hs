@@ -29,11 +29,13 @@ main = do
 
 findFiles :: [Directory] -> [Directory] -> FilterPredicate -> IO [FilePath]
 findFiles dirs rdirs pred =
-  join <$> sequence ( do
-    (dir, recursion) <- (dirs `zip` repeat (depth <? 1)) ++ (rdirs `zip` repeat always)
-    return $ find recursion pred (unpack dir) <&> map (makeRelative' dir)
+  join <$> sequence (
+    (find' (depth <? 1) <$> dirs ) ++
+    (find' always       <$> rdirs)
   )
-  
+  where
+    find' recursion dir = map (makeRelative' dir) <$> find recursion pred (unpack dir)
+
 isDll :: FilterPredicate
 isDll = extension ==? ".dll" &&? fileType ==? RegularFile
 
