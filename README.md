@@ -59,16 +59,23 @@ $ csi-init
 $ csi-init -h
 Invokes the `csi` C# REPL preloaded with a bunch of assemblies.
 
-Usage: csi-init [-r|--rdir ASSEMBLYDIR] [-d|--dir ASSEMBLYDIR] [ARGUMENTS...]
-                [--debug]
-  All arguments specified after `--` will be passed to `csi`. E.g.: `csi-init --
-  /u:Newtonsoft.Json`
+Usage: csi-init [-d|--dir ASSEMBLYDIR] [-r|--rdir ASSEMBLYDIR]
+                [-e|--exclude PATTERN] [ARGUMENTS...] [--debug]
+  All arguments specified after `--` will be passed directly to `csi`. E.g.:
+  `csi-init -- /u:Newtonsoft.Json`
 
 Available options:
   -h,--help                Show this help text
+  -d,--dir ASSEMBLYDIR     Import all assemblies from the specified folder
   -r,--rdir ASSEMBLYDIR    Import all assemblies from the specified folder and
                            it's subfolders (recursive search)
-  -d,--dir ASSEMBLYDIR     Import all assemblies from the specified folder
+  -e,--exclude PATTERN     Exclude assemblies whose path match a pattern (e.g.
+                           **filename.dll, C:\\tmp\\file*.dll, **\\x86\\**) NB:
+                           patterns are matched against an assembly's absolute,
+                           canonical path. I.e., on Windows, backslashes are
+                           used and the drive letter is uppercase. Backslashes
+                           must be escaped with "\\". For more information on
+                           patterns, see https://goo.gl/3TqYeF
   --debug                  Print the arguments being passed to `csi`
 ```
 
