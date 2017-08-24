@@ -5,6 +5,10 @@
 >
 > \- Jeff McCrory
 
+## Download
+
+See https://github.com/dcastro/csi-init/releases
+
 ## Usage
 
 **Note:** make sure you have `csi` in your path. It comes bundled with Visual Studio 2015 and is typically located in `C:\Program Files (x86)\MSBuild\14.0\Bin\`.
@@ -31,10 +35,6 @@ $ nuget install LanguageExt.Core
 $ nuget install xunit
 $ csi-init -r c:\CommonPackages
 ```
-
-## Download
-
-See https://github.com/dcastro/csi-init/releases
 
 ## Building
 
