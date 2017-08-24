@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances, DeriveGeneric #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
@@ -22,21 +23,21 @@ instance Newtype Argument
 -- csi-init -d <bin_dir1> -d <bin_dir2> -- /u:<namespace1>
 main :: IO ()
 main = do
-  (Flags dirs rdirs patterns args debug) <- mkOpts >>= customExecParser parserPrefs
-  let findFilter  = isDll &&? excludePaths patterns
-  dlls            <- findFiles dirs rdirs findFilter
-  let args'       = prepareArgs (dirs ++ rdirs) dlls args
+  Flags{..}       <- mkOpts >>= customExecParser parserPrefs
+  let findFilter  = isDll &&? excludePaths excludePatterns
+  dlls            <- findFiles asmDirs asmRDirs findFilter
+  let args'       = prepareArgs (asmDirs ++ asmRDirs) dlls args
   when debug (printArgs args')
   callProcess "csi" (unpack <$> args')
 
 findFiles :: [Directory] -> [Directory] -> FilterPredicate -> IO [FilePath]
-findFiles dirs rdirs pred =
+findFiles dirs rdirs predicate =
   join <$> sequence (
     (find' (depth <? 1) <$> dirs ) ++
     (find' always       <$> rdirs)
   )
   where
-    find' recursion dir = map (makeRelative' dir) <$> find recursion pred (unpack dir)
+    find' recursion dir = map (makeRelative' dir) <$> find recursion predicate (unpack dir)
 
 isDll :: FilterPredicate
 isDll = extension ==? ".dll" &&? fileType ==? RegularFile
@@ -48,7 +49,8 @@ excludePaths patterns = ala AllClause foldMap $ (path /~?) <$> patterns
 prepareArgs :: [Directory] -> [FilePath] -> [Argument] -> [Argument]
 prepareArgs dirs dlls args =
   let importDirs = over Directory ("/lib:" ++) <$> dirs
-      importDlls = if null dlls then []
+      importDlls = if null dlls
+                    then []
                     else [pack $ "/r:" ++ join (intersperse "," dlls)]
   in  importDirs ++ importDlls ++ args
 
@@ -56,11 +58,11 @@ printArgs :: [Argument] -> IO ()
 printArgs args = putStrLn ("Arg count: " ++ show (length args)) >> mapM_ (putStrLn . unpack) args
 
 data Flags = Flags {
-  asmDirs   :: [Directory],
-  asmRDirs  :: [Directory],
-  exclude   :: [GlobPattern],
-  args      :: [Argument],
-  debug     :: Bool
+  asmDirs         :: [Directory],
+  asmRDirs        :: [Directory],
+  excludePatterns :: [GlobPattern],
+  args            :: [Argument],
+  debug           :: Bool
 }
 
 flags :: Parser Flags
@@ -97,6 +99,7 @@ mkOpts = do
       <> progDesc ("All arguments specified after `--` will be passed directly to `csi`. E.g.: `" ++ progName ++ " -- /u:Newtonsoft.Json`")
       <> header "Invokes the `csi` C# REPL preloaded with a bunch of assemblies.")
 
+parserPrefs :: ParserPrefs
 parserPrefs = prefs showHelpOnError
 
 -- flipped fmap
